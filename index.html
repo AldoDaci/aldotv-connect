@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="sq">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aldo TV</title>
+<meta name="description" content="Ruaj një faqe nga telefoni në televizor.">
+<meta name="theme-color" content="#0d2229">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root {
+    --bg: #071114; --panel: #0f2a31; --line: #1d4652; --text: #fff; --soft: #a9c9d0;
+    --accent: #8fd3e0; --ok: #8be3a6; --warn: #ffd98a; --button: #fff; --button-text: #0a1c21;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font: 20px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    min-height: 100vh; padding: 24px 16px 40px;
+    background: radial-gradient(ellipse 140% 60% at 50% 0%, #17414c 0%, var(--bg) 70%);
+  }
+  main { max-width: 520px; margin: 0 auto; }
+  header { display: flex; align-items: center; margin-bottom: 28px; }
+  header svg { flex: none; margin-right: 14px; }
+  h1 { font-size: 30px; margin: 0; letter-spacing: -.01em; }
+  .sub { color: var(--soft); font-size: 17px; margin: 2px 0 0; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 22px; margin-bottom: 18px; }
+  .big { font-size: 26px; font-weight: 700; margin: 0 0 8px; }
+  p { margin: 0 0 12px; }
+  p:last-child { margin-bottom: 0; }
+  label { display: block; font-weight: 600; margin-bottom: 10px; }
+  textarea {
+    width: 100%; min-height: 96px; resize: vertical; font: inherit; color: var(--text);
+    background: #08191d; border: 2px solid var(--line); border-radius: 14px; padding: 14px;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  button {
+    display: block; width: 100%; min-height: 64px; margin-top: 14px; border: 0; border-radius: 18px;
+    font-family: inherit; font-size: 22px; font-weight: 700; line-height: 1.2; cursor: pointer;
+    background: var(--button); color: var(--button-text);
+  }
+  button.quiet { background: transparent; color: var(--accent); border: 2px solid var(--line); min-height: 56px; font-size: 19px; }
+  button:disabled { opacity: .5; }
+  .status { font-size: 24px; font-weight: 700; text-align: center; padding: 8px 0; }
+  .status.ok { color: var(--ok); }
+  .status.warn { color: var(--warn); }
+  .linked { color: var(--soft); font-size: 16px; text-align: center; margin-top: 24px; }
+  .linked button { display: inline; width: auto; min-height: 0; margin: 0 0 0 6px; padding: 4px 6px;
+    background: none; color: var(--accent); font-size: 16px; font-weight: 600; text-decoration: underline; }
+  ol { margin: 0; padding-left: 26px; }
+  li { margin-bottom: 6px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="3.2"/><path d="M8 2.5 12 6.5 16 2.5"/></svg>
+    <div><h1>Aldo TV</h1><p class="sub">Faqet nga telefoni, në televizor</p></div>
+  </header>
+
+  <!-- Not linked yet: scan the QR on the TV -->
+  <section id="unlinked" class="card hidden">
+    <p class="big">Ky telefon nuk është lidhur ende</p>
+    <p>Në televizor hapni <b>Connect</b> dhe skanoni kodin QR me kamerën e telefonit.</p>
+  </section>
+
+  <!-- A link was shared into the page (or sent with the button) -->
+  <section id="sending" class="card hidden">
+    <div id="send-status" class="status"></div>
+    <p id="send-title" class="sub" style="text-align:center"></p>
+    <button id="retry" class="hidden">Provo përsëri</button>
+  </section>
+
+  <section id="linked" class="hidden">
+    <div class="card">
+      <label for="link">Lidhja e faqes</label>
+      <textarea id="link" placeholder="Ngjitni këtu lidhjen e faqes" autocomplete="off"></textarea>
+      <button id="paste" class="quiet hidden">Ngjit lidhjen e kopjuar</button>
+      <button id="send">Ruaje në TV</button>
+    </div>
+
+    <!-- Android: add to home screen, then the page is in the Share menu -->
+    <div id="install" class="card hidden">
+      <p class="big">Edhe më e lehtë</p>
+      <p>Shtojeni Aldo TV në telefon. Pastaj te çdo faqe shtypni <b>Shpërndaj → Aldo TV</b>.</p>
+      <button id="install-btn">Shto Aldo TV në telefon</button>
+    </div>
+
+    <div id="howto" class="card">
+      <p class="big">Si ruhet një faqe</p>
+      <ol id="howto-share" class="hidden">
+        <li>Hapni faqen në telefon.</li>
+        <li>Shtypni <b>Shpërndaj</b>.</li>
+        <li>Zgjidhni <b>Aldo TV</b>. Faqja shtohet te <b>Connect</b> në televizor.</li>
+      </ol>
+      <ol id="howto-paste">
+        <li>Hapni faqen dhe kopjoni lidhjen.</li>
+        <li>Hapni këtë faqe dhe ngjiteni lart.</li>
+        <li>Shtypni <b>Ruaje në TV</b>.</li>
+      </ol>
+    </div>
+
+    <div class="linked">Lidhur me televizorin<button id="unlink">Shkëput</button></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  var RELAY = 'https://ntfy.sh/';
+  var KEY = 'aldotv.topic';
+  var $ = function (id) { return document.getElementById(id); };
+  var store = {
+    get: function () { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } },
+    set: function (v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} }
+  };
+  var lastSend = null;
+
+  // The QR on the TV opens this page as  ...#t=<topic>. The # part never reaches the web server.
+  var m = location.hash.match(/[#&]t=(aldotv-[a-f0-9]{8,40})/);
+  if (m) {
+    store.set(m[1]);
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+
+  var installed = window.matchMedia && matchMedia('(display-mode: standalone)').matches;
+
+  function show() {
+    var linked = !!store.get();
+    $('unlinked').classList.toggle('hidden', linked);
+    $('linked').classList.toggle('hidden', !linked);
+    $('howto-share').classList.toggle('hidden', !installed);
+    $('howto-paste').classList.toggle('hidden', installed);
+    $('paste').classList.toggle('hidden', !(navigator.clipboard && navigator.clipboard.readText));
+  }
+
+  function findLink(text) { return ((text || '').match(/https?:\/\/[^\s<>"]+/) || [''])[0]; }
+
+  function send(link, title) {
+    var topic = store.get();
+    lastSend = { link: link, title: title };
+    $('sending').classList.remove('hidden');
+    $('retry').classList.add('hidden');
+    $('send-title').textContent = title || link;
+    setStatus('Po dërgohet…', '');
+    if (!topic) { setStatus('Ky telefon nuk është lidhur me televizorin.', 'warn'); return; }
+    // Title as a query parameter: headers can't carry every character
+    var url = RELAY + topic + (title ? '?title=' + encodeURIComponent(title.slice(0, 200)) : '');
+    fetch(url, { method: 'POST', body: link }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      setStatus('U ruajt! E gjeni te Connect në televizor.', 'ok');
+      $('link').value = '';
+    }).catch(function () {
+      setStatus('Nuk u dërgua. Kontrolloni internetin dhe provoni përsëri.', 'warn');
+      $('retry').classList.remove('hidden');
+    });
+  }
+
+  function setStatus(text, kind) {
+    var s = $('send-status');
+    s.textContent = text;
+    s.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  $('send').onclick = function () {
+    var link = findLink($('link').value);
+    if (!link) {
+      $('sending').classList.remove('hidden');
+      $('send-title').textContent = '';
+      $('retry').classList.add('hidden');
+      setStatus('Ngjitni fillimisht lidhjen e faqes.', 'warn');
+      return;
+    }
+    send(link, $('link').value.replace(link, '').trim());
+  };
+  $('retry').onclick = function () { if (lastSend) send(lastSend.link, lastSend.title); };
+  $('paste').onclick = function () {
+    navigator.clipboard.readText().then(function (t) { $('link').value = t; }).catch(function () {});
+  };
+  $('unlink').onclick = function () {
+    if (confirm('Ta shkëpus këtë telefon nga televizori?')) { store.set(''); show(); }
+  };
+
+  // Android: offer "add to home screen" (then Aldo TV is in the Share menu)
+  var prompt = null;
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    prompt = e;
+    if (store.get()) $('install').classList.remove('hidden');
+  });
+  $('install-btn').onclick = function () {
+    if (!prompt) return;
+    prompt.prompt();
+    prompt.userChoice.then(function () { prompt = null; $('install').classList.add('hidden'); });
+  };
+  window.addEventListener('appinstalled', function () { $('install').classList.add('hidden'); });
+
+  show();
+
+  // Opened from the Share menu: ?url=…&text=…&title=…  -> send at once
+  var q = new URLSearchParams(location.search);
+  var shared = q.get('url') || findLink(q.get('text'));
+  if (shared) {
+    var title = (q.get('title') || (q.get('text') || '').replace(shared, '')).trim();
+    history.replaceState(null, '', location.pathname);
+    send(shared, title);
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+})();
+</script>
+</body>
+</html>
